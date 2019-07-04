@@ -51,7 +51,7 @@ public:
 class PostRemoveHandle
 {
 public:
-  PostRemoveHandle(uint64_t m_sender, Datagram &m_datagram);
+  PostRemoveHandle(uint64_t m_sender, Datagram &datagram);
   ~PostRemoveHandle();
 
 public:
