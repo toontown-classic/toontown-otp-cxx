@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <vector>
 #include <unordered_map>
 
 #include "pandabase.h"
@@ -24,8 +25,7 @@ PUBLISHED:
   Participant(MessageDirector *acceptor, ParticipantInterface *interface, PT(Connection) rendezvous, NetAddress address, PT(Connection) connection);
   ~Participant();
 
-  void received_datagram(DatagramIterator &iterator);
-  void received_control_message(DatagramIterator &iterator);
+  void receive_datagram(DatagramIterator &iterator);
   void disconnected();
 
 public:
@@ -41,8 +41,7 @@ PUBLISHED:
   MessageDirector(const char *address, uint16_t port, uint32_t backlog = 100000, size_t num_threads = 1);
   ~MessageDirector();
 
-  virtual Participant* init_handler(PT(Connection) rendezvous, NetAddress address, PT(Connection) connection);
-  virtual ParticipantInterface* init_interface();
+  Participant* init_handler(PT(Connection) rendezvous, NetAddress address, PT(Connection) connection);
 
 public:
   ParticipantInterface *m_interface = nullptr;

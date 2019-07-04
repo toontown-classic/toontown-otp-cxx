@@ -11,19 +11,11 @@ Participant::~Participant()
 
 }
 
-void Participant::received_datagram(DatagramIterator &iterator)
+void Participant::receive_datagram(DatagramIterator &iterator)
 {
   uint64_t channels = iterator.get_uint8();
-  if (channels == 1)
-  {
-    received_control_message(iterator);
-  }
-}
-
-void Participant::received_control_message(DatagramIterator &iterator)
-{
   uint64_t channel = iterator.get_uint64();
-  if (channel == CONTROL_MESSAGE)
+  if (channels == 1 && channel == CONTROL_MESSAGE)
   {
     uint16_t message_type = iterator.get_uint16();
     uint64_t sender = iterator.get_uint64();
@@ -87,7 +79,7 @@ void Participant::disconnected()
 MessageDirector::MessageDirector(const char *address, uint16_t port, uint32_t backlog, size_t num_threads)
   : NetworkAcceptor(address, port, backlog, num_threads)
 {
-  m_interface = init_interface();
+  m_interface = new ParticipantInterface(this);
 }
 
 MessageDirector::~MessageDirector()
@@ -98,11 +90,6 @@ MessageDirector::~MessageDirector()
 Participant* MessageDirector::init_handler(PT(Connection) rendezvous, NetAddress address, PT(Connection) connection)
 {
   return new Participant(this, this->m_interface, rendezvous, address, connection);
-}
-
-ParticipantInterface* MessageDirector::init_interface()
-{
-  return new ParticipantInterface(this);
 }
 
 PostRemoveHandle::PostRemoveHandle(uint64_t sender, Datagram &datagram)
@@ -287,7 +274,7 @@ void ParticipantInterface::clear_post_removes(Participant *participant, uint64_t
     {
       assert(post_remove != nullptr);
       DatagramIterator iterator(post_remove->m_datagram);
-      participant->received_datagram(iterator);
+      participant->receive_datagram(iterator);
       remove_post_remove(channel, post_remove);
     }
   }

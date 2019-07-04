@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdexcept>
+#include <vector>
+#include <unordered_map>
 
 #include "pandabase.h"
 #include "asyncTaskManager.h"
@@ -28,11 +31,13 @@ PUBLISHED:
   virtual ~NetworkHandler();
 
   virtual bool send_datagram(Datagram &datagram);
-  virtual void received_datagram(DatagramIterator &iterator);
+  virtual void receive_datagram(DatagramIterator &iterator);
   virtual void disconnected();
 
-public:
+private:
   NetworkAcceptor *m_acceptor = nullptr;
+
+public:
   PT(Connection) m_rendezvous;
   NetAddress m_address;
   PT(Connection) m_connection;
@@ -70,34 +75,39 @@ PUBLISHED:
   NetworkAcceptor(const char *address, uint16_t port, uint32_t backlog, size_t num_threads = 0);
   virtual ~NetworkAcceptor();
 
+  virtual void setup_connection();
+
   bool has_handler(NetworkHandler *handler);
   void add_handler(NetworkHandler *handler);
   void remove_handler(NetworkHandler *handler);
-  NetworkHandler* get_handler_from_connection(Connection *connection);
+  NetworkHandler* get_handler(PT(Connection) connection);
+  void disconnect_handler(NetworkHandler *handler);
 
   virtual NetworkHandler* init_handler(PT(Connection) rendezvous, NetAddress address, PT(Connection) connection);
 
-private:
+  private:
   static AsyncTask::DoneStatus listener_poll(GenericAsyncTask *task, void *data);
   static AsyncTask::DoneStatus reader_poll(GenericAsyncTask *task, void *data);
   static AsyncTask::DoneStatus disconnect_poll(GenericAsyncTask *task, void *data);
 
-public:
-  string m_address;
-  uint16_t m_port;
-  uint32_t m_backlog;
-  PT(Connection) m_socket;
-  vector<NetworkHandler*> m_handlers;
-
-  QueuedConnectionManager *m_manager = nullptr;
-  QueuedConnectionListener *m_listener = nullptr;
-  QueuedConnectionReader *m_reader = nullptr;
-  ConnectionWriter *m_writer = nullptr;
+private:
+  PT(Connection) m_connection;
+  unordered_map<Connection*, NetworkHandler*> m_handlers_map;
 
   PT(AsyncTaskManager) m_task_mgr;
   PT(GenericAsyncTask) m_listen_task;
   PT(GenericAsyncTask) m_reader_task;
   PT(GenericAsyncTask) m_disconnect_task;
+
+public:
+  string m_address;
+  uint16_t m_port;
+  uint32_t m_backlog;
+
+  QueuedConnectionManager m_manager;
+  QueuedConnectionListener m_listener;
+  QueuedConnectionReader m_reader;
+  ConnectionWriter m_writer;
 
 public:
   static TypeHandle get_class_type()
