@@ -1,0 +1,11 @@
+#pragma once
+
+#define CONTROL_MESSAGE            1
+#define CONTROL_SET_CHANNEL        2002
+#define CONTROL_REMOVE_CHANNEL     2003
+#define CONTROL_SET_CON_NAME       2004
+#define CONTROL_SET_CON_URL        2005
+#define CONTROL_ADD_RANGE          2006
+#define CONTROL_REMOVE_RANGE       2007
+#define CONTROL_ADD_POST_REMOVE    2008
+#define CONTROL_CLEAR_POST_REMOVE  2009
