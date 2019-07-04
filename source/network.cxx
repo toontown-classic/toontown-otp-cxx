@@ -67,6 +67,7 @@ void NetworkAcceptor::setup_connection()
 
 bool NetworkAcceptor::has_handler(NetworkHandler *handler)
 {
+  assert(handler != nullptr);
   unordered_map<Connection*, NetworkHandler*>::iterator it = m_handlers_map.begin();
   for (it; it != m_handlers_map.end(); ++it)
   {
@@ -87,7 +88,7 @@ void NetworkAcceptor::add_handler(NetworkHandler *handler)
     return;
   }
 
-  m_handlers_map.insert(pair<PT(Connection), NetworkHandler*>(handler->m_connection, handler));
+  m_handlers_map.insert(pair<Connection*, NetworkHandler*>(handler->m_connection, handler));
   m_reader.add_connection(handler->m_connection);
 }
 
@@ -102,6 +103,7 @@ void NetworkAcceptor::remove_handler(NetworkHandler *handler)
   m_reader.remove_connection(handler->m_connection);
   unordered_map<Connection*, NetworkHandler*>::iterator it;
   it = m_handlers_map.find(handler->m_connection);
+  assert(it != m_handlers_map.end());
   m_handlers_map.erase(it, m_handlers_map.end());
   delete handler;
 }
