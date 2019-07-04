@@ -144,7 +144,7 @@ AsyncTask::DoneStatus NetworkAcceptor::listener_poll(GenericAsyncTask *task, voi
     }
   }
 
-  return AsyncTask::DS_again;
+  return AsyncTask::DS_cont;
 }
 
 AsyncTask::DoneStatus NetworkAcceptor::reader_poll(GenericAsyncTask *task, void *data)
@@ -166,7 +166,7 @@ AsyncTask::DoneStatus NetworkAcceptor::reader_poll(GenericAsyncTask *task, void 
     }
   }
 
-  return AsyncTask::DS_again;
+  return AsyncTask::DS_cont;
 }
 
 AsyncTask::DoneStatus NetworkAcceptor::disconnect_poll(GenericAsyncTask *task, void *data)
@@ -181,5 +181,5 @@ AsyncTask::DoneStatus NetworkAcceptor::disconnect_poll(GenericAsyncTask *task, v
     }
   }
 
-  return AsyncTask::DS_again;
+  return AsyncTask::DS_cont;
 }
