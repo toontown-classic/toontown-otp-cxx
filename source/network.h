@@ -85,7 +85,7 @@ PUBLISHED:
 
   virtual NetworkHandler* init_handler(PT(Connection) rendezvous, NetAddress address, PT(Connection) connection);
 
-  private:
+private:
   static AsyncTask::DoneStatus listener_poll(GenericAsyncTask *task, void *data);
   static AsyncTask::DoneStatus reader_poll(GenericAsyncTask *task, void *data);
   static AsyncTask::DoneStatus disconnect_poll(GenericAsyncTask *task, void *data);
