@@ -23,7 +23,7 @@ void Participant::receive_datagram(DatagramIterator &iterator)
     {
       case CONTROL_SET_CHANNEL:
         {
-          if (m_channel == 0)
+          if (!channel)
           {
             m_channel = sender;
           }
@@ -47,9 +47,14 @@ void Participant::receive_datagram(DatagramIterator &iterator)
         break;
       case CONTROL_ADD_POST_REMOVE:
         {
-          Datagram datagram(iterator.get_remaining_bytes());
-          PostRemoveHandle *post_remove = new PostRemoveHandle(sender, datagram);
-          m_interface->add_post_remove(sender, post_remove);
+          if (iterator.get_remaining_size() > 0)
+          {
+            Datagram *datagram = new Datagram();
+            datagram->append_data(iterator.get_remaining_bytes());
+
+            PostRemoveHandle *post_remove = new PostRemoveHandle(sender, datagram);
+            m_interface->add_post_remove(sender, post_remove);
+          }
         }
         break;
       case CONTROL_CLEAR_POST_REMOVE:
@@ -92,7 +97,7 @@ Participant* MessageDirector::init_handler(PT(Connection) rendezvous, NetAddress
   return new Participant(this, this->m_interface, rendezvous, address, connection);
 }
 
-PostRemoveHandle::PostRemoveHandle(uint64_t sender, Datagram &datagram)
+PostRemoveHandle::PostRemoveHandle(uint64_t sender, Datagram *datagram)
   : m_sender(sender), m_datagram(datagram)
 {
 
@@ -100,7 +105,8 @@ PostRemoveHandle::PostRemoveHandle(uint64_t sender, Datagram &datagram)
 
 PostRemoveHandle::~PostRemoveHandle()
 {
-
+  m_datagram->clear();
+  delete m_datagram;
 }
 
 TypeHandle ParticipantInterface::_type_handle;
@@ -174,7 +180,8 @@ void ParticipantInterface::remove_participant(uint64_t channel)
 
   unordered_map<uint64_t, Participant*>::iterator it;
   it = m_channels_map.find(channel);
-  m_channels_map.erase(it, m_channels_map.end());
+  assert(it != m_channels_map.end());
+  m_channels_map.erase(channel);
 }
 
 void ParticipantInterface::remove_participant(Participant *participant)
@@ -229,8 +236,7 @@ void ParticipantInterface::add_post_remove(uint64_t channel, PostRemoveHandle *p
   it = m_post_removes_map.find(channel);
   if (it != m_post_removes_map.end())
   {
-    vector<PostRemoveHandle*> post_removes = it->second;
-    post_removes.push_back(post_remove);
+    it->second.push_back(post_remove);
   }
   else
   {
@@ -259,7 +265,7 @@ void ParticipantInterface::remove_post_remove(uint64_t channel, PostRemoveHandle
   // remove the post removes entry if we have no more handles
   if (!post_removes.size())
   {
-    m_post_removes_map.erase(it, m_post_removes_map.end());
+    m_post_removes_map.erase(channel);
   }
 }
 
@@ -269,13 +275,15 @@ void ParticipantInterface::clear_post_removes(Participant *participant, uint64_t
   it = m_post_removes_map.find(channel);
   if (it != m_post_removes_map.end())
   {
-    vector<PostRemoveHandle*> post_removes = it->second;
-    for (PostRemoveHandle *post_remove : post_removes)
+    for (PostRemoveHandle *post_remove : it->second)
     {
       assert(post_remove != nullptr);
-      DatagramIterator iterator(post_remove->m_datagram);
-      participant->receive_datagram(iterator);
+      Datagram dg;
+      dg.append_data(post_remove->m_datagram->get_data(), post_remove->m_datagram->get_length());
       remove_post_remove(channel, post_remove);
+
+      DatagramIterator iterator(dg);
+      participant->receive_datagram(iterator);
     }
   }
 }

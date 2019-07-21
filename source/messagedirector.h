@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <vector>
+#include <deque>
 #include <unordered_map>
 
 #include "pandabase.h"
@@ -50,12 +51,12 @@ public:
 class PostRemoveHandle
 {
 public:
-  PostRemoveHandle(uint64_t m_sender, Datagram &datagram);
+  PostRemoveHandle(uint64_t m_sender, Datagram *datagram);
   ~PostRemoveHandle();
 
 public:
   uint64_t m_sender = 0;
-  Datagram &m_datagram;
+  Datagram *m_datagram;
 };
 
 class ParticipantInterface : public TypedObject
