@@ -51,7 +51,8 @@ lib/
 win_*/
 linux_*/
 osx_*/
-interrogate*
+interrogate_*
+interrogate*.in
 
 # Visual Studio Code
 .vscode/
