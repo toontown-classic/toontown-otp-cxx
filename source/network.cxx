@@ -104,7 +104,7 @@ void NetworkAcceptor::remove_handler(NetworkHandler *handler)
   unordered_map<Connection*, NetworkHandler*>::iterator it;
   it = m_handlers_map.find(handler->m_connection);
   assert(it != m_handlers_map.end());
-  m_handlers_map.erase(it, m_handlers_map.end());
+  m_handlers_map.erase(handler->m_connection);
   delete handler;
 }
 
