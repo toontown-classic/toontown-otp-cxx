@@ -150,15 +150,8 @@ bool NetworkAcceptor::has_handler(NetworkHandler *handler)
 {
   assert(handler != nullptr);
   unordered_map<Connection*, NetworkHandler*>::iterator it = m_handlers_map.begin();
-  for (it; it != m_handlers_map.end(); ++it)
-  {
-    if (it->first == handler->m_connection && it->second == handler)
-    {
-      return true;
-    }
-  }
-
-  return false;
+  it = m_handlers_map.find(handler->m_connection);
+  return it != m_handlers_map.end();
 }
 
 void NetworkAcceptor::add_handler(NetworkHandler *handler)
@@ -273,7 +266,7 @@ AsyncTask::DoneStatus NetworkAcceptor::disconnect_poll(GenericAsyncTask *task, v
 {
   NetworkAcceptor *self = (NetworkAcceptor*)data;
   unordered_map<Connection*, NetworkHandler*>::iterator it = self->m_handlers_map.begin();
-  for (it; it != self->m_handlers_map.end(); ++it)
+  for (; it != self->m_handlers_map.end(); ++it)
   {
     NetworkHandler *handler = it->second;
     if (!self->m_reader.is_connection_ok(handler->m_connection))

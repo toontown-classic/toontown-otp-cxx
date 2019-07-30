@@ -125,21 +125,14 @@ ParticipantInterface::~ParticipantInterface()
 bool ParticipantInterface::has_participant(uint64_t channel)
 {
   unordered_map<uint64_t, Participant*>::iterator it = m_channels_map.begin();
-  for (it; it != m_channels_map.end(); ++it)
-  {
-    if (it->first == channel)
-    {
-      return true;
-    }
-  }
-
-  return false;
+  it = m_channels_map.find(channel);
+  return it != m_channels_map.end();
 }
 
 bool ParticipantInterface::has_participant(Participant *participant)
 {
   unordered_map<uint64_t, Participant*>::iterator it = m_channels_map.begin();
-  for (it; it != m_channels_map.end(); ++it)
+  for (; it != m_channels_map.end(); ++it)
   {
     if (it->second == participant)
     {
@@ -198,12 +191,10 @@ void ParticipantInterface::remove_participant(Participant *participant)
 Participant* ParticipantInterface::get_participant(uint64_t channel)
 {
   unordered_map<uint64_t, Participant*>::iterator it = m_channels_map.begin();
-  for (it; it != m_channels_map.end(); ++it)
+  it = m_channels_map.find(channel);
+  if (it != m_channels_map.end())
   {
-    if (it->first == channel)
-    {
-      return it->second;
-    }
+    return it->second;
   }
 
   return nullptr;
