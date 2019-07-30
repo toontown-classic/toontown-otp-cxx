@@ -20,6 +20,7 @@ void init_libotp()
     return;
   }
 
+  NetworkConnector::init_type();
   NetworkHandler::init_type();
   NetworkAcceptor::init_type();
 
