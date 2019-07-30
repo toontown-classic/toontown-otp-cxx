@@ -52,8 +52,6 @@ private:
 
   PT(Connection) m_connection;
 
-  PT(AsyncTaskManager) m_task_mgr = AsyncTaskManager::get_global_ptr();
-
   PT(GenericAsyncTask) m_reader_task;
   PT(GenericAsyncTask) m_disconnect_task;
 
@@ -163,8 +161,6 @@ private:
 
   PT(Connection) m_connection;
   unordered_map<Connection*, NetworkHandler*> m_handlers_map;
-
-  PT(AsyncTaskManager) m_task_mgr = AsyncTaskManager::get_global_ptr();
 
   PT(GenericAsyncTask) m_listen_task;
   PT(GenericAsyncTask) m_reader_task;

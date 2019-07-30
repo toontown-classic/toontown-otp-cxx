@@ -4,6 +4,8 @@ TypeHandle NetworkConnector::_type_handle;
 TypeHandle NetworkHandler::_type_handle;
 TypeHandle NetworkAcceptor::_type_handle;
 
+PT(AsyncTaskManager) task_mgr = AsyncTaskManager::get_global_ptr();
+
 NetworkConnector::NetworkConnector(const char *address, uint16_t port, int timeout_ms, size_t num_threads)
   : m_address(address), m_port(port), m_timeout_ms(timeout_ms),
     m_reader(&m_manager, num_threads), m_writer(&m_manager, num_threads)
@@ -15,14 +17,14 @@ NetworkConnector::NetworkConnector(const char *address, uint16_t port, int timeo
   m_reader_task = new GenericAsyncTask("_reader_task", &NetworkConnector::reader_poll, this);
   m_disconnect_task = new GenericAsyncTask("_disconnect_task", &NetworkConnector::disconnect_poll, this);
 
-  m_task_mgr->add(m_reader_task);
-  m_task_mgr->add(m_disconnect_task);
+  task_mgr->add(m_reader_task);
+  task_mgr->add(m_disconnect_task);
 }
 
 NetworkConnector::~NetworkConnector()
 {
-  m_task_mgr->remove(m_reader_task);
-  m_task_mgr->remove(m_disconnect_task);
+  task_mgr->remove(m_reader_task);
+  task_mgr->remove(m_disconnect_task);
 }
 
 void NetworkConnector::setup_connection()
@@ -123,16 +125,16 @@ NetworkAcceptor::NetworkAcceptor(const char *address, uint16_t port, uint32_t ba
   m_reader_task = new GenericAsyncTask("_reader_task", &NetworkAcceptor::reader_poll, this);
   m_disconnect_task = new GenericAsyncTask("_disconnect_task", &NetworkAcceptor::disconnect_poll, this);
 
-  m_task_mgr->add(m_listen_task);
-  m_task_mgr->add(m_reader_task);
-  m_task_mgr->add(m_disconnect_task);
+  task_mgr->add(m_listen_task);
+  task_mgr->add(m_reader_task);
+  task_mgr->add(m_disconnect_task);
 }
 
 NetworkAcceptor::~NetworkAcceptor()
 {
-  m_task_mgr->remove(m_listen_task);
-  m_task_mgr->remove(m_reader_task);
-  m_task_mgr->remove(m_disconnect_task);
+  task_mgr->remove(m_listen_task);
+  task_mgr->remove(m_reader_task);
+  task_mgr->remove(m_disconnect_task);
 }
 
 void NetworkAcceptor::setup_connection()
