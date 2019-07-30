@@ -39,7 +39,7 @@ public:
 class MessageDirector : public NetworkAcceptor
 {
 PUBLISHED:
-  MessageDirector(const char *address, uint16_t port, uint32_t backlog = 100000, size_t num_threads = 1);
+  MessageDirector(const char *address, uint16_t port, uint32_t backlog=100000, size_t num_threads=1);
   ~MessageDirector();
 
   Participant* init_handler(PT(Connection) rendezvous, NetAddress address, PT(Connection) connection);

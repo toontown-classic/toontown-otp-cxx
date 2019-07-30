@@ -1,7 +1,89 @@
 #include "network.h"
 
+TypeHandle NetworkConnector::_type_handle;
 TypeHandle NetworkHandler::_type_handle;
 TypeHandle NetworkAcceptor::_type_handle;
+
+NetworkConnector::NetworkConnector(const char *address, uint16_t port, int timeout_ms, size_t num_threads)
+  : m_address(address), m_port(port), m_timeout_ms(timeout_ms),
+    m_reader(&m_manager, num_threads), m_writer(&m_manager, num_threads)
+{
+  // setup our connection
+  setup_connection();
+
+  // setup up our polling tasks
+  m_reader_task = new GenericAsyncTask("_reader_task", &NetworkConnector::reader_poll, this);
+  m_disconnect_task = new GenericAsyncTask("_disconnect_task", &NetworkConnector::disconnect_poll, this);
+
+  m_task_mgr->add(m_reader_task);
+  m_task_mgr->add(m_disconnect_task);
+}
+
+NetworkConnector::~NetworkConnector()
+{
+  m_task_mgr->remove(m_reader_task);
+  m_task_mgr->remove(m_disconnect_task);
+}
+
+void NetworkConnector::setup_connection()
+{
+  m_connection = m_manager.open_TCP_client_connection(m_address, m_port, m_timeout_ms);
+  if (!m_connection)
+  {
+    throw runtime_error("Failed to open TCP client connection!");
+  }
+
+  m_reader.add_connection(m_connection);
+}
+
+bool NetworkConnector::send_datagram(Datagram &datagram)
+{
+  return m_writer.send(datagram, m_connection);
+}
+
+void NetworkConnector::receive_datagram(DatagramIterator &iterator)
+{
+
+}
+
+void NetworkConnector::disconnected()
+{
+
+}
+
+void NetworkConnector::disconnect()
+{
+  m_reader.remove_connection(m_connection);
+  disconnected();
+}
+
+AsyncTask::DoneStatus NetworkConnector::reader_poll(GenericAsyncTask *task, void *data)
+{
+  NetworkConnector *self = (NetworkConnector*)data;
+  if (self->m_reader.data_available())
+  {
+    Datagram datagram;
+    if (self->m_reader.get_data(datagram))
+    {
+      DatagramIterator iterator(datagram);
+      self->receive_datagram(iterator);
+    }
+  }
+
+  return AsyncTask::DS_cont;
+}
+
+AsyncTask::DoneStatus NetworkConnector::disconnect_poll(GenericAsyncTask *task, void *data)
+{
+  NetworkConnector *self = (NetworkConnector*)data;
+  if (!self->m_reader.is_connection_ok(self->m_connection))
+  {
+    self->disconnect();
+    return AsyncTask::DS_done;
+  }
+
+  return AsyncTask::DS_cont;
+}
 
 NetworkHandler::NetworkHandler(NetworkAcceptor *acceptor, PT(Connection) rendezvous, NetAddress address, PT(Connection) connection)
   : m_acceptor(acceptor), m_rendezvous(rendezvous), m_address(address), m_connection(connection)
@@ -16,7 +98,7 @@ NetworkHandler::~NetworkHandler()
 
 bool NetworkHandler::send_datagram(Datagram &datagram)
 {
-  return m_acceptor->m_writer.send(datagram, m_connection);
+  return m_acceptor->send_handler_datagram(this, datagram);
 }
 
 void NetworkHandler::receive_datagram(DatagramIterator &iterator)
@@ -37,7 +119,6 @@ NetworkAcceptor::NetworkAcceptor(const char *address, uint16_t port, uint32_t ba
   setup_connection();
 
   // setup up our polling tasks
-  PT(AsyncTaskManager) m_task_mgr = AsyncTaskManager::get_global_ptr();
   m_listen_task = new GenericAsyncTask("_listen_task", &NetworkAcceptor::listener_poll, this);
   m_reader_task = new GenericAsyncTask("_reader_task", &NetworkAcceptor::reader_poll, this);
   m_disconnect_task = new GenericAsyncTask("_disconnect_task", &NetworkAcceptor::disconnect_poll, this);
@@ -118,6 +199,12 @@ NetworkHandler* NetworkAcceptor::get_handler(PT(Connection) connection)
   }
 
   return nullptr;
+}
+
+bool NetworkAcceptor::send_handler_datagram(NetworkHandler *handler, Datagram &datagram)
+{
+  assert(handler != nullptr);
+  return m_writer.send(datagram, handler->m_connection);
 }
 
 void NetworkAcceptor::disconnect_handler(NetworkHandler *handler)
