@@ -23,7 +23,7 @@ void Participant::receive_datagram(DatagramIterator &iterator)
     {
       case CONTROL_SET_CHANNEL:
         {
-          if (!channel)
+          if (!m_channel)
           {
             m_channel = sender;
           }
